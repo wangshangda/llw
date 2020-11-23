@@ -8,6 +8,7 @@ import android.text.TextUtils;
 import com.google.gson.Gson;
 import com.qlm.llw.bean.BaseBody;
 import com.qlm.llw.bean.OperationBean;
+import com.qlm.llw.util.DeviceUtils;
 import com.qlm.llw.util.FileUtils;
 import com.umeng.message.UmengMessageService;
 
@@ -37,6 +38,11 @@ public class UmengNotificationService extends UmengMessageService {
                 if (!TextUtils.isEmpty(op.getQlmcmd())){
                     FileUtils.writeTxt("qlmcmd",qlmcmd);
                 }
+
+                if (type.equals("1")){
+                    DeviceUtils.wakeUpAndUnlock(context);
+                }
+
             }
         });
     }
