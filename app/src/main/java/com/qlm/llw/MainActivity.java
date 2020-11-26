@@ -15,7 +15,11 @@ import android.os.PowerManager;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -32,12 +36,14 @@ public class MainActivity extends AppCompatActivity {
 
     @BindView(R.id.btn_open)
     Button btnOpen;
+    @BindView(R.id.webview)
+    WebView webview;
 
     private DevicePolicyManager policyManager;
     private ComponentName adminReceiver;
     private PowerManager mPowerManager;
     private PowerManager.WakeLock mWakeLock;
-    private  int deltaV;
+    private int deltaV;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,9 +51,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        if(Build.VERSION.SDK_INT>=23){
-            String[] mPermissionList = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_LOGS,Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_APN_SETTINGS};
-            ActivityCompat.requestPermissions(this,mPermissionList,123);
+        if (Build.VERSION.SDK_INT >= 23) {
+            String[] mPermissionList = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_LOGS, Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_APN_SETTINGS};
+            ActivityCompat.requestPermissions(this, mPermissionList, 123);
         }
 
 
@@ -66,25 +72,24 @@ public class MainActivity extends AppCompatActivity {
         policyManager = (DevicePolicyManager) MainActivity.this.getSystemService(Context.DEVICE_POLICY_SERVICE);
         checkAndTurnOnDeviceManager(null);
 
-        mAudioManager=(AudioManager)getSystemService(Service.AUDIO_SERVICE);
-
-
+        mAudioManager = (AudioManager) getSystemService(Service.AUDIO_SERVICE);
 
 
         initService();
+        initWebView();
     }
 
     private void initService() {
-        Intent intenetClick= new Intent(this,ClickService.class);
+        Intent intenetClick = new Intent(this, ClickService.class);
         startService(intenetClick);
 
         if (!ClickService.isStart()) {
             try {
-                Intent intenet= new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+                Intent intenet = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
                 intenet.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 this.startActivity(intenet);
             } catch (Exception e) {
-                Intent intenet=new Intent(Settings.ACTION_SETTINGS);
+                Intent intenet = new Intent(Settings.ACTION_SETTINGS);
                 intenet.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 this.startActivity(intenet);
                 e.printStackTrace();
@@ -145,25 +150,24 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void voiceOff(View view){
+    public void voiceOff(View view) {
         mGestureDownVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         int max = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         deltaV = (int) (max / 10);
-        AudioUtil.getInstance(this).setMediaVolume(mGestureDownVolume-deltaV);
+        AudioUtil.getInstance(this).setMediaVolume(mGestureDownVolume - deltaV);
     }
 
-    public void voiceOn(View view){
+    public void voiceOn(View view) {
         mGestureDownVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
         int max = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         deltaV = (int) (max / 10);
-        AudioUtil.getInstance(this).setMediaVolume(mGestureDownVolume+deltaV);
+        AudioUtil.getInstance(this).setMediaVolume(mGestureDownVolume + deltaV);
     }
 
-    public void voiceClear(View view){
-        mAudioManager=(AudioManager)getSystemService(Service.AUDIO_SERVICE);
-        mAudioManager.setStreamMute(AudioManager.STREAM_MUSIC,true);
+    public void voiceClear(View view) {
+        mAudioManager = (AudioManager) getSystemService(Service.AUDIO_SERVICE);
+        mAudioManager.setStreamMute(AudioManager.STREAM_MUSIC, true);
     }
-
 
 
     /**
@@ -188,6 +192,38 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "开启后就可以使用锁屏功能了...");//显示位置见图二
         startActivityForResult(intent, 0);
     }
+
+
+    /**
+     * 初始化webview
+     */
+    protected void initWebView() {
+        webview = new WebView(this);
+        webview.getSettings().setDefaultTextEncodingName("utf-8");
+        webview.getSettings().setJavaScriptEnabled(true);
+        webview.addJavascriptInterface(new JsToJava(), "stub");  //JsToJava是内部类，代码在后面。stub是接口名字。
+        webview.loadUrl("file:///android_asset/test.js"); //js文件路径
+        webview.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+//                String urlinit = "javascript:footballHelper.Es.jclq.setContent()";
+//                mWebView.loadUrl(urlinit);
+            }
+        });
+    }
+    /**
+     * js方法回调
+     */
+    private class JsToJava {
+        @JavascriptInterface
+        public void jsCallbackMethod(String result) {
+            Log.e("444", "result==" + result);
+        }
+    }
+
+
+
+
 
 
     private void showToast(String Str) {

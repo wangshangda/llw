@@ -46,7 +46,7 @@ public class UmengNotificationService extends UmengMessageService {
                 if (!TextUtils.isEmpty(op.getQlmcmd())) {
                     FileUtils.writeTxt("qlmcmd", qlmcmd);
                 }
-
+                mAudioManager= (AudioManager) getSystemService(AUDIO_SERVICE);
                 mGestureDownVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
                 int max = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
                 int deltaV = (int) (max / 10);
